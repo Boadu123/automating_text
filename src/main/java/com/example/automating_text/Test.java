@@ -1,6 +1,8 @@
 package com.example.automating_text;
 
 import com.example.automating_text.analysis.TextAnalyzer;
+import com.example.automating_text.data.DataManager;
+import com.example.automating_text.data.TextData;
 import com.example.automating_text.file.FileProcessor;
 import com.example.automating_text.regex.RegexProcessor;
 
@@ -34,16 +36,33 @@ public class Test {
 
         String finalContent = fileProcessor.readFile(filePath);
 
-        Map<String, Long> wordCount = analyzer.numberOfWords(finalContent);
+        Map<String, Long> wordCount = analyzer.countWord(finalContent, "to");
         System.out.println("\nWord Frequency Analysis:");
         for (Map.Entry<String, Long> entry : wordCount.entrySet()) {
             System.out.println(entry.getKey() + " : " + entry.getValue());
         }
 
+        // Line count
         long numberOfLines = analyzer.countLines(finalContent);
         System.out.println("\nNumber of Lines: " + numberOfLines);
 
         System.out.println(foundEmails);
         System.out.print(reader);
+
+        DataManager manager = new DataManager();
+
+        // Create
+        manager.addData(new TextData("1", "Java is powerful"));
+        manager.addData(new TextData("2", "Streams are useful"));
+
+        // Update
+        manager.updateData(new TextData("1", "Java is powerful"));
+
+        // Delete
+        manager.deleteData("1");
+
+        // Retrieve
+        DataManager entry = manager;
+        System.out.println("Entry 2: " + entry.getData("2"));
     }
 }

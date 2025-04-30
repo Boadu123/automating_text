@@ -1,16 +1,78 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 
-<?import javafx.scene.control.Button?>
-<VBox alignment="CENTER" spacing="20.0" xmlns:fx="http://javafx.com/fxml"
-      fx:controller="com.example.automating_text.controllers.HelloController">
+<VBox xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1"
+      fx:controller="com.example.automating_text.controllers.HelloController"
+      spacing="10">
     <padding>
-        <Insets bottom="20.0" left="20.0" right="20.0" top="20.0"/>
+        <Insets top="10" right="10" bottom="10" left="10"/>
     </padding>
 
-    <Label fx:id="welcomeText"/>
-    <Button text="Hello!" onAction="#onHelloButtonClick"/>
+    <MenuBar>
+        <Menu text="File">
+            <MenuItem text="Exit" onAction="#handleExit"/>
+        </Menu>
+    </MenuBar>
+
+    <HBox spacing="10">
+        <TextField fx:id="filePathField" promptText="File path" HBox.hgrow="ALWAYS"/>
+        <Button text="Browse" onAction="#onBrowseClick"/>
+        <Button text="Load" onAction="#onLoadFileClick"/>
+        <Button text="Save" onAction="#onSaveFileClick"/>
+    </HBox>
+
+    <TabPane fx:id="tabPane" VBox.vgrow="ALWAYS">
+        <Tab text="Text Editor">
+            <TextArea fx:id="contentArea" wrapText="true"/>
+        </Tab>
+
+        <Tab text="Word Analysis">
+            <VBox spacing="10">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+                <HBox spacing="10">
+                    <TextField fx:id="searchWordField" promptText="Word to count" HBox.hgrow="ALWAYS"/>
+                    <Button text="Count Word" onAction="#onFindWordClick"/>
+                    <Button text="Count All" onAction="#onCountWordsClick"/>
+                </HBox>
+                <ListView fx:id="wordCountList" VBox.vgrow="ALWAYS"/>
+            </VBox>
+        </Tab>
+
+        <Tab text="Regex Tools">
+            <VBox spacing="10">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+                <HBox spacing="10">
+                    <TextField fx:id="regexPatternField" promptText="Regex pattern" HBox.hgrow="ALWAYS"/>
+                    <Button text="Find Matches" onAction="#onFindRegexClick"/>
+                </HBox>
+                <HBox spacing="10">
+                    <TextField fx:id="replacementField" promptText="Replacement text" HBox.hgrow="ALWAYS"/>
+                    <Button text="Replace All" onAction="#onReplaceRegexClick"/>
+                </HBox>
+                <ListView fx:id="regexMatchesList" VBox.vgrow="ALWAYS"/>
+            </VBox>
+        </Tab>
+
+        <Tab text="Data Management">
+            <VBox spacing="10">
+                <padding>
+                    <Insets top="10" right="10" bottom="10" left="10"/>
+                </padding>
+                <HBox spacing="10">
+                    <TextField fx:id="dataIdField" promptText="Data ID" HBox.hgrow="ALWAYS"/>
+                    <Button text="Save Data" onAction="#onSaveDataClick"/>
+                    <Button text="Load Data" onAction="#onLoadDataClick"/>
+                </HBox>
+            </VBox>
+        </Tab>
+    </TabPane>
+
+    <Label fx:id="statusLabel" style="-fx-font-style: italic;"/>
 </VBox>

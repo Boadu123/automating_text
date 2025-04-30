@@ -1,6 +1,7 @@
 module com.example.automating_text {
     requires javafx.controls;
     requires javafx.fxml;
+    requires java.logging;
 
 
     opens com.example.automating_text to javafx.fxml;
