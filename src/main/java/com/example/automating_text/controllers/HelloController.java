@@ -5,6 +5,8 @@ import com.example.automating_text.data.DataManager;
 import com.example.automating_text.data.TextData;
 import com.example.automating_text.file.FileProcessor;
 import com.example.automating_text.regex.RegexProcessor;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
@@ -14,6 +16,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
+import java.util.NoSuchElementException;
+import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
 
@@ -37,25 +41,32 @@ public class HelloController {
     @FXML private ListView<String> wordCountList;
     @FXML private ListView<String> regexMatchesList;
 
+
+
+
     @FXML
     protected void onBrowseClick() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setTitle("Open Text File");
+        fileChooser.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Text Files", "*.txt"));
         File file = fileChooser.showOpenDialog(contentArea.getScene().getWindow());
+
         if (file != null) {
             filePathField.setText(file.getAbsolutePath());
+            // Automatically load the file after selection
+            loadFileContent(file);
         }
     }
 
-    @FXML
-    protected void onLoadFileClick() {
+    private void loadFileContent(File file) {
         try {
-            String content = fileProcessor.readFile(filePathField.getText());
+            String content = fileProcessor.readFile(file.getAbsolutePath());
             contentArea.setText(content);
-            updateStatus("File loaded successfully");
-            logger.info("Successfully loaded file: " + filePathField.getText());
+            updateStatus("File loaded successfully: " + file.getName());
+            logger.info("Successfully loaded file: " + file.getAbsolutePath());
         } catch (IOException e) {
-            logger.severe("Error reading file '" + filePathField.getText() + "': " + e.getMessage());
+            logger.severe("Error reading file '" + file.getAbsolutePath() + "': " + e.getMessage());
             showError("Failed to load file: " + e.getMessage());
         } catch (IllegalArgumentException e) {
             logger.severe("Invalid file path: " + e.getMessage());
@@ -154,32 +165,6 @@ public class HelloController {
         }
     }
 
-    @FXML
-    protected void onSaveDataClick() {
-        try {
-            TextData data = new TextData(
-                    dataIdField.getText(),
-                    contentArea.getText()
-            );
-            dataManager.addData(data);
-            updateStatus("Data saved with ID: " + data.getId());
-        } catch (IllegalArgumentException e) {
-            logger.warning("Attempted to load non-existing data ID: " + dataIdField.getText());
-            showError(e.getMessage());
-        }
-    }
-
-    @FXML
-    protected void onLoadDataClick() {
-        try {
-            TextData data = dataManager.getData(dataIdField.getText());
-            contentArea.setText(data.getContent());
-            updateStatus("Data loaded: " + data.getId());
-        } catch (NullPointerException e) {
-            logger.warning("Attempted to load non-existing data ID: " + dataIdField.getText());
-            showError("No data found with this ID "+ e.getMessage());
-        }
-    }
 
     private void updateStatus(String message) {
         statusLabel.setText(message);
@@ -190,6 +175,151 @@ public class HelloController {
         new Alert(Alert.AlertType.ERROR, message).showAndWait();
     }
 
-    public void handleExit(ActionEvent actionEvent) {
+    @FXML private ListView<TextData> dataList;
+    private final ObservableList<TextData> observableDataList = FXCollections.observableArrayList();
+
+    @FXML
+    public void initialize() {
+        dataList.setItems(observableDataList);
+        dataList.setCellFactory(param -> new ListCell<>() {
+            @Override
+            protected void updateItem(TextData item, boolean empty) {
+                super.updateItem(item, empty);
+                if (empty || item == null) {
+                    setText(null);
+                } else {
+                    setText("ID: " + item.getId() + " - " + summarize(item.getContent()));
+                }
+            }
+        });
+
+        dataList.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal != null) {
+                dataIdField.setText(newVal.getId());
+                contentArea.setText(newVal.getContent());
+                updateStatus("Loaded item with ID: " + newVal.getId());
+            }
+        });
     }
+
+    private String summarize(String content) {
+        return content.length() > 30 ? content.substring(0, 30).replaceAll("\n", " ") + "..." : content;
+    }
+
+
+
+    // Helper method to refresh the list view
+    private void refreshDataList() {
+        observableDataList.setAll(dataManager.getAllData());
+    }
+
+    // Generate a new ID (you can customize this as needed)
+    private String generateNewId() {
+        return "data-" + System.currentTimeMillis();
+    }
+
+    @FXML
+    protected void onDeleteDataClick() {
+        String id = dataIdField.getText().trim();
+        if (id.isEmpty()) {
+            showError("Please enter an ID to delete");
+            return;
+        }
+
+        try {
+            dataManager.deleteData(id);
+            observableDataList.removeIf(d -> d.getId().equals(id));
+            dataIdField.clear();
+            contentArea.clear();
+            updateStatus("Data deleted with ID: " + id);
+        } catch (Exception e) {
+            showError("Delete failed: " + e.getMessage());
+        }
+    }
+
+
+    // Add these to your existing controller
+    @FXML
+    protected void onNewDataClick(ActionEvent event) {
+        dataIdField.clear();
+        contentArea.clear();
+        dataIdField.setPromptText("ID will be auto-generated");
+        updateStatus("Ready for new entry");
+    }
+
+    @FXML
+    protected void onSaveDataClick(ActionEvent event) {
+        try {
+            String id = dataIdField.getText().trim();
+            String content = contentArea.getText();
+
+            if (content.isEmpty()) {
+                showError("Content cannot be empty");
+                return;
+            }
+
+            if (id.isEmpty()) {
+                id = UUID.randomUUID().toString().substring(0, 4);
+                dataIdField.setText(id);
+            }
+
+            TextData data = new TextData(id, content);
+            dataManager.addData(data);
+
+            refreshDataList();
+            updateStatus("Saved with ID: " + data.getId());
+        } catch (Exception e) {
+            showError("Error saving: " + e.getMessage());
+        }
+    }
+
+
+    @FXML
+    protected void onLoadDataClick(ActionEvent event) {
+        try {
+            String id = dataIdField.getText().trim();
+            if (id.isEmpty()) {
+                showError("Please enter an ID");
+                return;
+            }
+            TextData data = dataManager.getData(id);
+            contentArea.setText(data.getContent());
+            updateStatus("Loaded: " + id);
+        } catch (Exception e) {
+            showError("Error loading: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    protected void onUpdateDataClick() {
+        String id = dataIdField.getText().trim();
+        if (id.isEmpty()) {
+            showError("Please enter an ID to update");
+            return;
+        }
+
+        try {
+            TextData updated = new TextData(id, contentArea.getText());
+            dataManager.updateData(updated);
+
+            observableDataList.removeIf(d -> d.getId().equals(id));
+            observableDataList.add(updated);
+
+            updateStatus("Data updated with ID: " + id);
+        } catch (Exception e) {
+            showError("Update failed: " + e.getMessage());
+        }
+    }
+
+    @FXML
+    protected void onListAllDataClick() {
+        try {
+            List<TextData> all = dataManager.getAllData();
+            observableDataList.setAll(all);
+            updateStatus("Loaded all data items");
+        } catch (Exception e) {
+            showError("Failed to list data: " + e.getMessage());
+        }
+    }
+
 }

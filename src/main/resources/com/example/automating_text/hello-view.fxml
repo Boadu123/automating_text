@@ -6,21 +6,15 @@
 
 <VBox xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1"
       fx:controller="com.example.automating_text.controllers.HelloController"
-      spacing="10">
+      spacing="10" stylesheets="@styles.css">
     <padding>
         <Insets top="10" right="10" bottom="10" left="10"/>
     </padding>
 
-    <MenuBar>
-        <Menu text="File">
-            <MenuItem text="Exit" onAction="#handleExit"/>
-        </Menu>
-    </MenuBar>
-
     <HBox spacing="10">
         <TextField fx:id="filePathField" promptText="File path" HBox.hgrow="ALWAYS"/>
         <Button text="Browse" onAction="#onBrowseClick"/>
-        <Button text="Load" onAction="#onLoadFileClick"/>
+<!--        <Button text="Load" onAction="#onLoadFileClick"/>-->
         <Button text="Save" onAction="#onSaveFileClick"/>
     </HBox>
 
@@ -66,10 +60,21 @@
                     <Insets top="10" right="10" bottom="10" left="10"/>
                 </padding>
                 <HBox spacing="10">
-                    <TextField fx:id="dataIdField" promptText="Data ID" HBox.hgrow="ALWAYS"/>
-                    <Button text="Save Data" onAction="#onSaveDataClick"/>
-                    <Button text="Load Data" onAction="#onLoadDataClick"/>
+                    <TextField fx:id="dataIdField" promptText="Data ID (leave empty for auto-generate)" HBox.hgrow="ALWAYS"/>
+                    <Button text="Save" onAction="#onSaveDataClick" styleClass="primary-button"/>
+                    <Button text="Load" onAction="#onLoadDataClick"/>
                 </HBox>
+                <HBox spacing="10">
+                    <Button text="New" onAction="#onNewDataClick" styleClass="secondary-button"/>
+                    <Button text="Update" onAction="#onUpdateDataClick"/>
+                    <Button text="Delete" onAction="#onDeleteDataClick" styleClass="danger-button"/>
+                    <Button text="List All" onAction="#onListAllDataClick"/>
+                </HBox>
+                <ListView fx:id="dataList" VBox.vgrow="ALWAYS">
+                    <placeholder>
+                        <Label text="No data items available"/>
+                    </placeholder>
+                </ListView>
             </VBox>
         </Tab>
     </TabPane>
