@@ -1,12 +1,16 @@
 package com.example.automating_text.data;
 
 import java.util.Objects;
+import java.util.UUID;
 
 public class TextData {
     private String id;
     private String content;
 
     public TextData(String id, String content) {
+        if (id == null || id.trim().isEmpty()) {
+            throw new IllegalArgumentException("ID cannot be null or empty");
+        }
         this.id = id;
         this.content = content;
     }

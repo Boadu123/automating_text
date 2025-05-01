@@ -35,16 +35,12 @@ public class DataManager {
     }
 
     // Delete
-    public void deleteData(String id) {
+    public boolean deleteData(String id) {
         if (!dataStore.containsKey(id)) {
-            throw new NoSuchElementException("Data with ID " + id + " not found");
+            return false;
         }
         dataStore.remove(id);
-    }
-
-    // Utility methods
-    public Set<String> getAllIds() {
-        return dataStore.keySet();
+        return true;
     }
 
     public boolean containsId(String id) {
