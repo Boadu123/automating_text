@@ -1,6 +1,5 @@
 package com.example.automating_text.data;
 
-import com.example.automating_text.data.TextData;
 import java.util.*;
 
 public class DataManager {
