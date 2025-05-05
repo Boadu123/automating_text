@@ -16,7 +16,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.UUID;
 import java.util.logging.Logger;
 import java.util.regex.PatternSyntaxException;
@@ -41,9 +40,6 @@ public class HelloController {
     @FXML private ListView<String> wordCountList;
     @FXML private ListView<String> regexMatchesList;
 
-
-
-
     @FXML
     protected void onBrowseClick() {
         FileChooser fileChooser = new FileChooser();
@@ -61,7 +57,17 @@ public class HelloController {
 
     private void loadFileContent(File file) {
         try {
+            if (file == null || !file.exists()) {
+                showError("File does not exist");
+                return;
+            }
+
             String content = fileProcessor.readFile(file.getAbsolutePath());
+            if (content == null || content.isEmpty()) {
+                showError("File is empty");
+                return;
+            }
+
             contentArea.setText(content);
             updateStatus("File loaded successfully: " + file.getName());
             logger.info("Successfully loaded file: " + file.getAbsolutePath());
@@ -82,7 +88,10 @@ public class HelloController {
             fileProcessor.writeFile(filePathField.getText(), contentArea.getText());
             updateStatus("File saved successfully");
             logger.info("Successfully saved File");
-        } catch (IOException | IllegalArgumentException e) {
+        } catch (IOException e) {
+            logger.severe("Error writing file  " + filePathField.getText() + e.getMessage() + e);
+            showError(e.getMessage());
+        } catch(IllegalArgumentException e) {
             logger.severe("Error writing file  " + filePathField.getText() + e.getMessage() + e);
             showError(e.getMessage());
         }
@@ -180,24 +189,32 @@ public class HelloController {
 
     @FXML
     public void initialize() {
-        dataList.setItems(observableDataList);
-        dataList.setCellFactory(param -> new ListCell<>() {
+        // Initialize the data list with custom cell factory
+        dataList.setCellFactory(param -> new ListCell<TextData>() {
             @Override
             protected void updateItem(TextData item, boolean empty) {
                 super.updateItem(item, empty);
                 if (empty || item == null) {
                     setText(null);
                 } else {
-                    setText("ID: " + item.getId() + " - " + summarize(item.getContent()));
+                    // Display ID and first 30 characters of content
+                    setText("ID: " + item.getId() + " - Content: " +
+                            (item.getContent().length() > 30 ?
+                                    item.getContent().substring(0, 30) + "..." :
+                                    item.getContent()));
                 }
             }
         });
 
+        // Load all data at startup
+        refreshDataList();
+
+        // Add selection listener
         dataList.getSelectionModel().selectedItemProperty().addListener((obs, oldVal, newVal) -> {
             if (newVal != null) {
                 dataIdField.setText(newVal.getId());
                 contentArea.setText(newVal.getContent());
-                updateStatus("Loaded item with ID: " + newVal.getId());
+                updateStatus("Selected item with ID: " + newVal.getId());
             }
         });
     }
@@ -210,10 +227,16 @@ public class HelloController {
 
     // Helper method to refresh the list view
     private void refreshDataList() {
-        observableDataList.setAll(dataManager.getAllData());
+        try {
+            observableDataList.setAll(dataManager.getAllData());
+            if (!observableDataList.isEmpty()) {
+                dataList.getSelectionModel().selectFirst();
+            }
+        } catch (Exception e) {
+            showError("Error loading data: " + e.getMessage());
+        }
     }
 
-    // Generate a new ID (you can customize this as needed)
     private String generateNewId() {
         return "data-" + System.currentTimeMillis();
     }
@@ -251,28 +274,38 @@ public class HelloController {
     protected void onSaveDataClick(ActionEvent event) {
         try {
             String id = dataIdField.getText().trim();
-            String content = contentArea.getText();
+            String content = contentArea.getText().trim();
 
             if (content.isEmpty()) {
                 showError("Content cannot be empty");
                 return;
             }
 
+            // Generate ID if empty
             if (id.isEmpty()) {
-                id = UUID.randomUUID().toString().substring(0, 4);
+                id = "data-" + UUID.randomUUID().toString().substring(0, 8);
                 dataIdField.setText(id);
             }
 
             TextData data = new TextData(id, content);
-            dataManager.addData(data);
+
+            // Check if this is an update or new entry
+            if (dataManager.getData(id) != null) {
+                dataManager.updateData(data);
+                updateStatus("Updated data with ID: " + id);
+            } else {
+                dataManager.addData(data);
+                updateStatus("Saved new data with ID: " + id);
+            }
 
             refreshDataList();
-            updateStatus("Saved with ID: " + data.getId());
+
+            // Select the newly added/updated item
+            dataList.getSelectionModel().select(data);
         } catch (Exception e) {
-            showError("Error saving: " + e.getMessage());
+            showError("Error saving data: " + e.getMessage());
         }
     }
-
 
     @FXML
     protected void onLoadDataClick(ActionEvent event) {
@@ -321,5 +354,4 @@ public class HelloController {
             showError("Failed to list data: " + e.getMessage());
         }
     }
-
 }

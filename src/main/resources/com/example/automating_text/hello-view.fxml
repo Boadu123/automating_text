@@ -14,7 +14,6 @@
     <HBox spacing="10">
         <TextField fx:id="filePathField" promptText="File path" HBox.hgrow="ALWAYS"/>
         <Button text="Browse" onAction="#onBrowseClick"/>
-<!--        <Button text="Load" onAction="#onLoadFileClick"/>-->
         <Button text="Save" onAction="#onSaveFileClick"/>
     </HBox>
 
@@ -54,7 +53,7 @@
             </VBox>
         </Tab>
 
-        <Tab text="Data Management">
+        <Tab text="Data Management" disable="true">
             <VBox spacing="10">
                 <padding>
                     <Insets top="10" right="10" bottom="10" left="10"/>
